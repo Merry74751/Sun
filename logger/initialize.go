@@ -7,11 +7,9 @@ import (
 	"os"
 )
 
-var vip *viper.Viper = new(viper.Viper)
-
 func init() {
-	initSumLog()
 	initConfig()
+	initSumLog()
 }
 
 func initSumLog() {
@@ -25,23 +23,39 @@ func initSumLog() {
 func initConfig() {
 	path, err := os.Getwd()
 	if err != nil {
-		Info("failed to get current path, error: {}", err)
+		log.Println("failed to get current path, error: {}", err)
 	}
-	vip.SetConfigName("config")
-	vip.AddConfigPath(path)
-	vip.SetConfigType("yaml")
+	viper.SetConfigName("config")
+	viper.AddConfigPath(path)
+	viper.SetConfigType("yaml")
 
-	err = vip.ReadInConfig()
+	err = viper.ReadInConfig()
 	if err != nil {
-		Info("failed to read the configuration file, error: {}", err)
+		log.Println("failed to read the configuration file, error: {}", err)
 	}
 
 	config = new(sumConfig)
-	level := vip.Get("logger.level")
+	level := viper.Get("logger.level")
 	if level == nil {
-		config.level = "info"
+		config.level = INFO
 	} else {
-		config.level = level.(string)
+		v := level.(string)
+		config.level = getLevel(v)
 	}
+}
 
+func getLevel(str string) int {
+	switch str {
+	case "info":
+		return INFO
+	case "debug":
+		return DEBUG
+	case "error":
+		return ERROR
+	case "warning":
+		return WARNING
+	default:
+		log.Printf("config.yaml logger.level value was error: %s, value must be 'error', 'warning', 'info', 'debug'", str)
+	}
+	return -1
 }

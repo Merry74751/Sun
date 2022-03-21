@@ -6,5 +6,7 @@ import (
 )
 
 func TestInfo(t *testing.T) {
-	logger.Error("test: {}", "test")
+	sumLog := logger.Logger()
+	sumLog.Info("test:{}", "test")
+	sumLog.Debug("test:{}", "test")
 }
