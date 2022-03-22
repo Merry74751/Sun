@@ -11,8 +11,8 @@ const (
 
 type sumConfig struct {
 	enableWriteFile bool
-	writeFileLevel  int
 	path            string
 	fileName        string
+	writeFileLevel  int
 	level           int
 }

@@ -1,2 +1,6 @@
 logger:
   level: info
+  enableWriteFile: true
+  path: D:\home
+  filename: test
+  writeFileLevel: warning

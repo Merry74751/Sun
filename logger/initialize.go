@@ -5,11 +5,13 @@ import (
 	"github.com/spf13/viper"
 	"log"
 	"os"
+	"strings"
 )
 
 func init() {
 	initConfig()
 	initSumLog()
+	sumLog.Info("Reading the configuration file is complete")
 }
 
 func initSumLog() {
@@ -21,30 +23,62 @@ func initSumLog() {
 }
 
 func initConfig() {
-	path, err := os.Getwd()
+	projectPath, err := os.Getwd()
 	if err != nil {
 		log.Println("failed to get current path, error: {}", err)
+		return
 	}
 	viper.SetConfigName("config")
-	viper.AddConfigPath(path)
+	viper.AddConfigPath(projectPath)
 	viper.SetConfigType("yaml")
 
 	err = viper.ReadInConfig()
 	if err != nil {
 		log.Println("failed to read the configuration file, error: {}", err)
+		return
 	}
 
 	config = new(sumConfig)
-	level := viper.Get("logger.level")
-	if level == nil {
+	level := viper.GetString("logger.level")
+	if level == "" {
 		config.level = INFO
 	} else {
-		v := level.(string)
-		config.level = getLevel(v)
+		config.level = getLevel(level)
 	}
+
+	enableWriteFile := viper.GetBool("logger.enableWriteFile")
+	config.enableWriteFile = enableWriteFile
+	if !enableWriteFile {
+		return
+	}
+
+	path := viper.GetString("logger.path")
+	if path == "" {
+		err := util.ColorText(util.Red, "config.yaml logger.path value is nil!")
+		log.Println(err)
+		return
+	}
+	config.path = path
+
+	filename := viper.GetString("logger.filename")
+	if filename == "" {
+		err := util.ColorText(util.Red, "config.yaml logger.filename value is nil")
+		log.Println(err)
+		return
+	}
+	config.fileName = filename
+
+	writeFileLevel := viper.GetString("logger.writeFileLevel")
+	if writeFileLevel == "" {
+		err := util.ColorText(util.Red, "config.yaml logger.writeFileLevel value is nil")
+		log.Println(err)
+		return
+	}
+	config.writeFileLevel = getLevel(writeFileLevel)
 }
 
 func getLevel(str string) int {
+	str = strings.ToLower(str)
 	switch str {
 	case "info":
 		return INFO

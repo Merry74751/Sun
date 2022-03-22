@@ -21,10 +21,10 @@ type SumLogger interface {
 }
 
 type Enable interface {
-	IsEnableError() bool
-	IsEnableWarning() bool
-	IsEnableInfo() bool
-	IsEnableDebug() bool
+	isEnableError() bool
+	isEnableWarning() bool
+	isEnableInfo() bool
+	isEnableDebug() bool
 }
 
 type sum struct {
@@ -35,49 +35,73 @@ type sum struct {
 }
 
 func (s sum) Error(src string, params ...any) {
-	if s.IsEnableError() {
+	if s.isEnableError() {
 		src = util.Formatter(src, params...)
 		src = util.ColorText(util.Red, src)
 		bytes := debug.Stack()
 		src = src + "\n" + string(bytes)
 		s.error.Println(src)
 	}
+	if enableWriteLog() {
+		if config.writeFileLevel >= DEBUG && config.writeFileLevel <= ERROR {
+			go WriteLog("error", src)
+		}
+	}
 }
 
 func (s sum) Warning(src string, params ...any) {
-	if s.IsEnableWarning() {
+	if s.isEnableWarning() {
 		src = util.Formatter(src, params...)
 		src = util.ColorText(util.Cyan, src)
 		s.warning.Println(src)
 	}
+	if enableWriteLog() {
+		if config.writeFileLevel >= DEBUG && config.writeFileLevel <= WARNING {
+			go WriteLog("warning", src)
+		}
+	}
 }
 
 func (s sum) Info(src string, params ...any) {
-	if s.IsEnableInfo() {
+	if s.isEnableInfo() {
 		src = util.Formatter(src, params...)
 		s.info.Println(src)
+	}
+	if enableWriteLog() {
+		if config.writeFileLevel >= DEBUG && config.writeFileLevel <= INFO {
+			go WriteLog("info", src)
+		}
 	}
 }
 
 func (s sum) Debug(src string, params ...any) {
-	if s.IsEnableDebug() {
+	if s.isEnableDebug() {
 		src = util.Formatter(src, params...)
 		s.debug.Println(src)
 	}
+	if enableWriteLog() {
+		if config.writeFileLevel == DEBUG {
+			go WriteLog("debug", src)
+		}
+	}
 }
 
-func (s sum) IsEnableError() bool {
+func (s sum) isEnableError() bool {
 	return config.level >= DEBUG && config.level <= ERROR
 }
 
-func (s sum) IsEnableWarning() bool {
+func (s sum) isEnableWarning() bool {
 	return config.level >= DEBUG && config.level <= WARNING
 }
 
-func (s sum) IsEnableInfo() bool {
+func (s sum) isEnableInfo() bool {
 	return config.level >= DEBUG && config.level <= INFO
 }
 
-func (s sum) IsEnableDebug() bool {
+func (s sum) isEnableDebug() bool {
 	return config.level == DEBUG
+}
+
+func enableWriteLog() bool {
+	return config.enableWriteFile
 }
